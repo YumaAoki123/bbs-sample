@@ -6,7 +6,8 @@ $comment_array = array();
 
 $pdo = null;
 $stmt = null;
-   
+$error_messages = array();
+
 // 別の場所に保存された設定ファイルへのパス
 $configFilePath = 'config.php';
 
@@ -22,7 +23,25 @@ if (file_exists($configFilePath)) {
 $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
 $pdo = new PDO($dsn, $username, $password);
 
+//フォームの入力時
 if(!empty($_POST["submitButton"])) {
+
+    //バリデーションチェック
+    if (empty($_POST["username"])){
+        
+        $error_messages["username"] = "名前を入力してください。";
+        
+    }
+    if (empty($_POST["comment"])){
+        
+        $error_messages["comment"] = "コメントを入力してください。";
+    }
+
+}
+
+    //データの送信
+    if(empty($error_messages)){
+
     $postDate = date("Y-m-d H:i:s");
 
     try {
@@ -41,7 +60,6 @@ if(!empty($_POST["submitButton"])) {
 //DBからコメントデータを取得する。
 $sql = "SELECT `id`, `username`, `comment`, `postDate` FROM `bbs-table`;";
 $comment_array = $pdo->query($sql);
-
 
 //DBの接続を閉じる。
 $pdo = null;
@@ -78,13 +96,30 @@ $pdo = null;
         <form class="formWrapper" method="POST">
             <div>
                 <input type="submit" value="書き込む" name="submitButton">
-                <label for="">名前</label>
-                <input type="text" name="username">
+                <label for="">名前:</label>
+                <input type="text" name="username" id="comment" style="<?php echo !empty($error_messages["username"]) ? 'border-color: red;' : ''; ?>" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+                <?php if (isset($error_messages['username'])) { ?>
+                <div class="error_message"><?php echo $error_messages['username']; ?></div>
+                <?php } ?>
             </div>
             <div>
-                <textarea class="commentTextArea" name="comment"></textarea>
+                <textarea class="commentTextArea" name="comment" style="<?php echo isset($error_messages['comment']) ? 'border-color: red;' : ''; ?>"><?php echo isset($_POST['comment']) ? htmlspecialchars($_POST['comment']) : ''; ?></textarea>
+                <?php if (isset($error_messages['comment'])) { ?>
+        <div class="error_message"><?php echo $error_messages['comment']; ?></div>
+    <?php } ?>
+
             </div>
         </form>
+        <script>
+    // エラーがある場合にテキストエリアにスクロールしてフォーカスを当てる
+    window.onload = function() {
+        <?php if (isset($error_messages['comment'])) { ?>
+            var commentTextarea = document.getElementById("comment");
+            commentTextarea.scrollIntoView();
+            commentTextarea.focus();
+        <?php } ?>
+              };
+        </script>
     </div>
 
 
